@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: appui5cicd
+description: App SAPUI5 CICD
+version: 0.0.1
+modules:
+- name: appui5cicd-dest-content
+  type: com.sap.application.content
+  requires:
+  - name: appui5cicd-dest-srv
+    parameters:
+      content-target: true
+  - name: appui5cicd-repo-host
+    parameters:
+      service-key:
+        name: appui5cicd-repo-host-key
+  - name: appui5cicd-uaa
+    parameters:
+      service-key:
+        name: appui5cicd-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: appui5cicd_repo_host
+          ServiceInstanceName: appui5cicd-html5-srv
+          ServiceKeyName: appui5cicd-repo-host-key
+          sap.cloud.service: appui5cicd
+        - Authentication: OAuth2UserTokenExchange
+          Name: appui5cicd_uaa
+          ServiceInstanceName: appui5cicd-xsuaa-srv
+          ServiceKeyName: appui5cicd-uaa-key
+          sap.cloud.service: appui5cicd
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: appui5cicd-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: appui5cicd-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - appui5cicd.zip
+      name: appui5cicd
+      target-path: resources/
+- name: appui5cicd
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: appui5cicd-dest-srv
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: appui5cicd-dest-srv
+    service-plan: lite
+- name: appui5cicd-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: appui5cicd-xsuaa-srv
+    service-plan: application
+- name: appui5cicd-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: appui5cicd-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
