@@ -9,7 +9,7 @@
             <pages>
                 <Page id="page" title="{i18n>title}">
                     <content>
-                        <Label id="idLabel" text="CICD"></Label>
+                        <Label id="idLabel" text="Integration CI/CD with Transport Management Services"></Label>
                     </content>
                 </Page>
             </pages>
